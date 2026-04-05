@@ -1,0 +1,36 @@
+replicaCount: 3
+
+image:
+  repository: visit-counter
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: visit-counter.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  ENV: "dev"
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    interval: 15s
