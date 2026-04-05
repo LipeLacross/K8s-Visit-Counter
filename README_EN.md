@@ -1,26 +1,28 @@
-# K8s-Visit-Counter - Projeto de Estudo Kubernetes
+# K8s-Visit-Counter - Kubernetes Study Project
 
-## 🌐🇧🇷 [Versão em Português](README.md)
+## 🌐🇧🇷 [Portuguese Version](README.md)
 ## 🌐🇺🇸 [English Version](README_EN.md)
 
 ---
 
-## O que este projeto faz?
+# K8s-Visit-Counter
 
-Uma API de contador de visitas em Flask que roda em 3 pods simultâneos no Kubernetes, com monitoramento via Prometheus e dashboards no Grafana.
+## What does this project do?
+
+A Flask API visit counter that runs on 3 simultaneous pods in Kubernetes, with monitoring via Prometheus and dashboards on Grafana.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ARQUITETURA DO PROJETO                   │
+│                    PROJECT ARCHITECTURE                      │
 └─────────────────────────────────────────────────────────────┘
 
                         ┌──────────────┐
-                        │   Usuário    │
+                        │   User       │
                         └──────┬───────┘
                                │ http://localhost:5000
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  KUBERNETES (K3d)                                          │
+│  KUBERNETES (K3d)                                           │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │  Service (Load Balancer) - visit-counter:80         │   │
 │  │         │              │              │              │   │
@@ -40,125 +42,125 @@ Uma API de contador de visitas em Flask que roda em 3 pods simultâneos no Kuber
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 🔨 Funcionalidades do Projeto
+## 🔨 Project Features
 
-- **API Contador de Visitas**: Aplicação Flask que conta visitas por pod
-- **3 Réplicas**: Deployment Kubernetes com 3 pods simultâneos
-- **Balanceamento de Carga**: Service distribui requisições entre pods
-- **Health Checks**: probes de liveness e readiness
-- **Métricas Prometheus**: Expostas via endpoint `/metrics`
-- **ServiceMonitor**: Descoberta automática de métricas pelo Prometheus
-- **Dashboards Grafana**: Visualização do cluster e aplicação
-- **Deploy com Helm**: Configuração declarativa Kubernetes
-- **Desenvolvimento Local**: Cluster K3d para testes locais
+- **Visit Counter API**: Flask application counting visits per pod
+- **3 Replicas**: Kubernetes Deployment with 3 simultaneous pods
+- **Load Balancing**: Service distributes requests across pods
+- **Health Checks**: Liveness and readiness probes
+- **Prometheus Metrics**: Exposed via `/metrics` endpoint
+- **ServiceMonitor**: Automatic metrics discovery by Prometheus
+- **Grafana Dashboards**: Visual monitoring of cluster and application
+- **Helm Deployment**: Declarative Kubernetes configuration
+- **Local Development**: K3d cluster for testing locally
 
-### 📸 Exemplo Visual
+### 📸 Visual Example
 
 ```
-# Acessar a aplicação
+# Access the application
 curl http://localhost:5000
-# Retorna: "Olá do Pod visit-counter-abc123 | Ambiente: dev | Visita número: 42"
+# Returns: "Olá do Pod visit-counter-abc123 | Ambiente: dev | Visita número: 42"
 
-# Ver métricas
+# Check metrics
 curl http://localhost:5000/metrics
-# Retorna: # HELP visitas_total Total de visitas na aplicação
+# Returns: # HELP visitas_total Total de visitas na aplicação
 # TYPE visitas_total counter
 # visitas_total 42
 ```
 
-## ✔️ Técnicas e Tecnologias Utilizadas
+## ✔️ Techniques and Technologies Used
 
-| Tecnologia | Finalidade |
-|------------|------------|
-| **Python/Flask** | Aplicação web |
-| **prometheus-client** | Exportação de métricas |
-| **Docker** | Conteinerização |
-| **Kubernetes (K3d)** | Orquestração de contêineres |
-| **Helm** | Gerenciamento de pacotes |
-| **Prometheus** | Coleta de métricas |
-| **Grafana** | Visualização |
-| **PowerShell** | Automação de scripts |
+| Technology | Purpose |
+|------------|---------|
+| **Python/Flask** | Web application |
+| **prometheus-client** | Metrics export |
+| **Docker** | Containerization |
+| **Kubernetes (K3d)** | Container orchestration |
+| **Helm** | Package management |
+| **Prometheus** | Metrics collection |
+| **Grafana** | Visualization |
+| **PowerShell** | Automation scripts |
 
-## 📊 Diagrama Mermaid
+## 📊 Mermaid Diagram
 
 ```mermaid
 graph TD
-    A[Usuário] -->|HTTP| B[Service]
+    A[User] -->|HTTP| B[Service]
     B --> C[Pod 1]
     B --> D[Pod 2]
     B --> E[Pod 3]
     
-    F[Prometheus] -->|Coleta Métricas| C
-    F -->|Coleta Métricas| D
-    F -->|Coleta Métricas| E
+    F[Prometheus] -->|Scrape Metrics| C
+    F -->|Scrape Metrics| D
+    F -->|Scrape Metrics| E
     
     F --> G[Grafana]
-    G -->|Mostra Dashboards| A
+    G -->|Display Dashboards| A
 ```
 
-## 📁 Estrutura do Projeto
+## 📁 Project Structure
 
 ```
 K8s-Visit-Counter/
-├── docker/                     # Imagem Docker
-│   ├── Dockerfile              # Definição da imagem
-│   └── requirements.txt         # Dependências Python
+├── docker/                     # Docker image
+│   ├── Dockerfile              # Image definition
+│   └── requirements.txt        # Python dependencies
 │
-├── src/                        # Código da aplicação
-│   └── app.py                  # App Flask com métricas
+├── src/                        # Application code
+│   └── app.py                  # Flask app with metrics
 │
-├── helm/visit-counter/         # Chart Helm
-│   ├── Chart.yaml              # Metadados do chart
-│   ├── values.yaml             # Configuração
-│   └── templates/              # Manifestos K8s
+├── helm/visit-counter/         # Helm chart
+│   ├── Chart.yaml              # Chart metadata
+│   ├── values.yaml             # Configuration
+│   └── templates/              # K8s manifests
 │       ├── deployment.yaml
 │       ├── service.yaml
 │       ├── ingress.yaml
 │       └── servicemonitor.yaml
 │
-├── monitoring/                 # Configuração de monitoramento
+├── monitoring/                 # Monitoring config
 │   └── values-prometheus.yaml
 │
-├── scripts/                    # Automação
+├── scripts/                    # Automation
 │   ├── setup-cluster.ps1
 │   └── deploy-app.ps1
 │
-└── README.md                  # Documentação
+└── README.md                  # Documentation
 ```
 
 - **docker/**
-  - `Dockerfile`: Container Python 3.11-slim
+  - `Dockerfile`: Python 3.11-slim container definition
   - `requirements.txt`: Flask 3.0.0, prometheus-client 0.19.0
 
 - **src/**
-  - `app.py`: Aplicação Flask com rotas `/`, `/metrics`, `/health`
+  - `app.py`: Flask application with `/`, `/metrics`, `/health` routes
 
 - **helm/visit-counter/**
-  - `Chart.yaml`: Metadados do chart (versão 0.1.0)
-  - `values.yaml`: replicaCount: 3, imagem, service, ingress
-  - `templates/deployment.yaml`: 3 réplicas com health probes
-  - `templates/service.yaml`: Service ClusterIP
-  - `templates/ingress.yaml`: Ingress Traefik
-  - `templates/servicemonitor.yaml`: Config de scraping Prometheus
+  - `Chart.yaml`: Helm chart metadata (version 0.1.0)
+  - `values.yaml`: Default replicaCount: 3, image, service, ingress configs
+  - `templates/deployment.yaml`: 3 replicas with health probes
+  - `templates/service.yaml`: ClusterIP service
+  - `templates/ingress.yaml`: Traefik ingress
+  - `templates/servicemonitor.yaml`: Prometheus scraping config
 
 - **monitoring/**
-  - `values-prometheus.yaml`: Senha admin Grafana, config Prometheus
+  - `values-prometheus.yaml`: Grafana admin password, Prometheus config
 
 - **scripts/**
-  - `setup-cluster.ps1`: Cria cluster K3d + instala Prometheus/Grafana
-  - `deploy-app.ps1`: Build Docker + deploy Helm
+  - `setup-cluster.ps1`: Creates K3d cluster + installs Prometheus/Grafana
+  - `deploy-app.ps1`: Builds Docker image + Helm deploy
 
-## 🛠️ Abrir e Rodar o Projeto
+## 🛠️ How to Run the Project
 
-### Pré-requisitos
+### Prerequisites
 
-Instale as seguintes ferramentas:
+Install the following tools:
 
 ```powershell
-# Usando Scoop (Windows)
+# Using Scoop (Windows)
 scoop install kubectl helm k3d
 
-# Verificar instalações
+# Verify installations
 kubectl version --client
 helm version
 k3d version
@@ -167,67 +169,67 @@ docker --version
 
 ### Quick Start
 
-**1. Setup do cluster:**
+**1. Setup the cluster:**
 ```powershell
 cd scripts
 .\setup-cluster.ps1
 ```
 
-**2. Deploy da aplicação:**
+**2. Deploy the application:**
 ```powershell
 .\deploy-app.ps1
 ```
 
-**3. Testar a aplicação:**
+**3. Test the application:**
 ```powershell
 kubectl port-forward -n apps svc/visit-counter 5000:80
-# Abra: http://localhost:5000
+# Open: http://localhost:5000
 ```
 
-**4. Acessar Grafana:**
+**4. Access Grafana:**
 ```powershell
 kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
-# Abra: http://localhost:3000
+# Open: http://localhost:3000
 # Login: admin / admin123
 ```
 
-## Comandos Úteis
+## Useful Commands
 
 ```powershell
-# Ver pods
+# View pods
 kubectl get pods -n apps
 
-# Ver deployment
+# View deployment
 kubectl get deployment -n apps
 
-# Ver service
+# View service
 kubectl get svc -n apps
 
-# Ver logs
+# View logs
 kubectl logs -n apps -l app=visit-counter
 
-# Acessar Prometheus
+# Access Prometheus
 kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
 
-# Escalar para 5 réplicas
+# Scale to 5 replicas
 helm upgrade visit-counter ../helm/visit-counter -n apps --set replicaCount=5
 
-# Deletar cluster
+# Delete cluster
 k3d cluster delete estudocluster
 ```
 
 ## 🌐 Deploy
 
-Este projeto é desenhado para **desenvolvimento local e aprendizado** usando K3d.
+This project is designed for **local development and learning** using K3d.
 
-Para deploy em produção:
-1. Envie a imagem Docker para um registry (Docker Hub, GHCR, etc.)
-2. Atualize os valores Helm com o registry de produção
-3. Faça deploy em um cluster Kubernetes real (EKS, GKE, AKS, etc.)
-4. Configure ingress com certificados TLS
+For production deployment:
+1. Push Docker image to a container registry (Docker Hub, GHCR, etc.)
+2. Update Helm values with production image repository
+3. Deploy to a real Kubernetes cluster (EKS, GKE, AKS, etc.)
+4. Configure proper ingress with TLS certificates
 
 ---
 
-**Última atualização**: 2026-04-05  
-**Versão do projeto**: 0.1.0  
-**Mantenedor**: Felipe Moreira Rios  
+**Last update**: 2026-04-05  
+**Project version**: 0.1.0  
+**Maintainer**: Felipe Moreira Rios  
