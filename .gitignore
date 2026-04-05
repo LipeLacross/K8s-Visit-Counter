@@ -201,6 +201,20 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# Project specific
+XK8s_Visit_Counter_Guide_2026.md
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.lock.*
+terraform.tfvars
+*.tfvars
+
+# Ansible
+*.retry
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

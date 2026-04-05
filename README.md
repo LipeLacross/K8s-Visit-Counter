@@ -73,6 +73,8 @@ curl http://localhost:5000/metrics
 | **Python/Flask** | Aplicação web |
 | **prometheus-client** | Exportação de métricas |
 | **Docker** | Conteinerização |
+| **Terraform** | Infraestrutura como Código (AWS) |
+| **Ansible** | Automação de configuração |
 | **Kubernetes (K3d)** | Orquestração de contêineres |
 | **Helm** | Gerenciamento de pacotes |
 | **Prometheus** | Coleta de métricas |
@@ -119,9 +121,18 @@ K8s-Visit-Counter/
 ├── monitoring/                 # Configuração de monitoramento
 │   └── values-prometheus.yaml
 │
-├── scripts/                    # Automação
+├── scripts/                    # Automação (PowerShell)
 │   ├── setup-cluster.ps1
 │   └── deploy-app.ps1
+│
+├── terraform/                 # Infraestrutura como Código
+│   ├── main.tf                 # Recursos AWS (VPC, EC2)
+│   ├── variables.tf            # Variáveis configuráveis
+│   └── outputs.tf              # Saídas (IPs, IDs)
+│
+├── ansible/                   # Automação de Configuração
+│   ├── inventory.ini           # Hosts do cluster
+│   └── playbook.yml            # Playbook de instalação
 │
 └── README.md                  # Documentação
 ```
@@ -148,51 +159,88 @@ K8s-Visit-Counter/
   - `setup-cluster.ps1`: Cria cluster K3d + instala Prometheus/Grafana
   - `deploy-app.ps1`: Build Docker + deploy Helm
 
+- **terraform/**
+  - `main.tf`: Cria VPC, subnets, security groups, instâncias EC2
+  - `variables.tf`: Parâmetros region, instance types, etc
+  - `outputs.tf`: Retorna IPs públicos das VMs
+
+- **ansible/**
+  - `inventory.ini`: Define servidores server e agents
+  - `playbook.yml`: Instala Docker, kubectl, helm, k3d, Prometheus
+
 ## 🛠️ Abrir e Rodar o Projeto
 
-### Pré-requisitos
-
-Instale as seguintes ferramentas:
+### Método 1: Local (K3d - Recomendado para estudo)
 
 ```powershell
-# Usando Scoop (Windows)
-scoop install kubectl helm k3d
+# Instalar ferramentas
+scoop install kubectl helm k3d docker
 
-# Verificar instalações
-kubectl version --client
-helm version
-k3d version
-docker --version
-```
-
-### Quick Start
-
-**1. Setup do cluster:**
-```powershell
+# Setup do cluster
 cd scripts
 .\setup-cluster.ps1
-```
 
-**2. Deploy da aplicação:**
-```powershell
+# Deploy da app
 .\deploy-app.ps1
 ```
 
-**3. Testar a aplicação:**
+### Método 2: Cloud (Terraform + Ansible)
+
+#### Passo 1: Criar infraestrutura com Terraform
 ```powershell
-kubectl port-forward -n apps svc/visit-counter 5000:80
-# Abra: http://localhost:5000
+cd terraform
+
+# Inicializar Terraform
+terraform init
+
+# Ver plano
+terraform plan -var="ssh_public_key=YOUR_KEY" -var="aws_region=us-east-1"
+
+# Criar recursos
+terraform apply -var="ssh_public_key=YOUR_KEY" -var="aws_region=us-east-1"
+
+# Obter IPs dos nodes
+terraform output
 ```
 
-**4. Acessar Grafana:**
+#### Passo 2: Configurar nodes com Ansible
 ```powershell
-kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
-# Abra: http://localhost:3000
-# Login: admin / admin123
+cd ansible
+
+# Atualizar inventory com IPs do Terraform
+# Edite inventory.ini com os IPs das instâncias
+
+# Executar playbook
+ansible-playbook -i inventory.ini playbook.yml
+```
+
+#### Passo 3: Deploy da aplicação
+```powershell
+# SSH para o server node
+ssh ubuntu@<server_ip>
+
+# Executar scripts de deploy
+cd scripts
+./deploy-app.sh
+```
+
+### Pré-requisitos (Método 2)
+
+```powershell
+# Terraform
+scoop install terraform
+
+# Ansible
+scoop install ansible
+
+# AWS CLI (para Terraform)
+scoop install awscli
+aws configure
 ```
 
 ## Comandos Úteis
 
+### Kubernetes (kubectl)
 ```powershell
 # Ver pods
 kubectl get pods -n apps
@@ -215,6 +263,104 @@ helm upgrade visit-counter ../helm/visit-counter -n apps --set replicaCount=5
 # Deletar cluster
 k3d cluster delete estudocluster
 ```
+
+### Terraform
+```powershell
+cd terraform
+
+# Inicializar
+terraform init
+
+# Ver plano
+terraform plan
+
+# Aplicar
+terraform apply
+
+# Destruir tudo
+terraform destroy
+
+# Ver outputs
+terraform output
+```
+
+### Ansible
+```powershell
+cd ansible
+
+# Testar conectividade
+ansible -i inventory.ini all -m ping
+
+# Executar playbook completo
+ansible-playbook -i inventory.ini playbook.yml
+
+# Executar apenas tasks específicas
+ansible-playbook -i inventory.ini playbook.yml --tags "docker,kubectl"
+```
+
+## 🌐 Stack Completa - Onde cada ferramenta se encaixa
+
+Este projeto demonstra a stack completa de DevOps:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  TERRAFORM (Infraestrutura)                                  │
+│  Cria: VPC, subnets, security groups, EC2                   │
+│  Arquivos: terraform/main.tf, variables.tf, outputs.tf     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ANSIBLE (Configuração)                                      │
+│  Instala: Docker, kubectl, helm, k3d, Prometheus            │
+│  Arquivos: ansible/inventory.ini, playbook.yml              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  KUBERNETES (Orquestração)                                   │
+│  Gerencia: Pods, Services, Deployments                     │
+│  Arquivos: helm/visit-counter/templates/*.yaml             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  HELM (Pacotes)                                              │
+│  Instala: Aplicações dentro do K8s                          │
+│  Arquivos: helm/visit-counter/Chart.yaml, values.yaml       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  DOCKER (Containerização)                                    │
+│  Empacota: Aplicação Python                                  │
+│  Arquivos: docker/Dockerfile, requirements.txt             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│  APLICAÇÃO (Código)                                          │
+│  Executa: API Flask com métricas Prometheus                 │
+│  Arquivos: src/app.py                                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Fluxo Completo de Deploy
+
+1. **Terraform** → Cria as VMs na AWS
+2. **Ansible** → Instala Docker e ferramentas nas VMs
+3. **K3d** → Cria o cluster Kubernetes nas VMs
+4. **Helm** → Faz deploy da aplicação no K8s
+5. **Docker** → Containeriza a aplicação
+6. **Aplicação** → Roda o código Python
+
+### Quando usar cada abordagem?
+
+| Abordagem | Quando usar |
+|-----------|-------------|
+| **scripts/PowerShell** | Desenvolvimento local (K3d) - mais simples |
+| **Terraform + Ansible** | Produção em cloud (AWS) - mais robusto |
+| **Apenas Helm** | Já tem infraestrutura, só precisa deployar |
 
 ## 🌐 Deploy
 

@@ -23,9 +23,18 @@ K8s-Visit-Counter/
 ├── monitoring/                 # Monitoring configuration
 │   └── values-prometheus.yaml  # Prometheus & Grafana settings
 │
-├── scripts/                     # Automation scripts
+├── scripts/                     # Automation scripts (PowerShell)
 │   ├── setup-cluster.ps1       # K3d cluster + Prometheus setup
 │   └── deploy-app.ps1          # Docker build + Helm deploy
+│
+├── terraform/                   # Infrastructure as Code (AWS)
+│   ├── main.tf                 # AWS resources (VPC, subnets, EC2)
+│   ├── variables.tf            # Configurable parameters
+│   └── outputs.tf              # Outputs (IPs, IDs)
+│
+├── ansible/                    # Configuration automation
+│   ├── inventory.ini           # Cluster hosts definition
+│   └── playbook.yml            # Installation tasks (Docker, kubectl, k3d)
 │
 ├── README.md                   # Portuguese documentation
 ├── README_EN.md                # English documentation
@@ -40,6 +49,8 @@ K8s-Visit-Counter/
 - **Orchestration Layer** (`helm/`): Kubernetes manifests defining deployment, service, and monitoring
 - **Infrastructure Layer** (`scripts/`): Automation for cluster creation and application deployment
 - **Observability Layer** (`monitoring/`): Prometheus and Grafana configuration
+- **IaC Layer** (`terraform/`): AWS infrastructure provisioning (VPC, EC2)
+- **Config Layer** (`ansible/`): Server configuration and tooling installation
 
 ### Scalability
 - **Horizontal Scaling**: Deployment configured with 3 replicas, easily scalable via Helm (`--set replicaCount=N`)

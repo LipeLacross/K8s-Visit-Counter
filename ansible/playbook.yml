@@ -1,0 +1,167 @@
+---
+- name: Setup Kubernetes Nodes
+  hosts: k8s
+  become: yes
+  vars:
+    k3d_version: "v5.7.4"
+    kubectl_version: "1.31.0"
+    helm_version: "3.16.3"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - gnupg
+          - apt-transport-https
+          - ca-certificates
+          - lsb-release
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create kubectl directory
+      file:
+        path: /tmp/kubectl
+        state: directory
+
+    - name: Download kubectl
+      get_url:
+        url: "https://dl.k8s.io/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Create helm directory
+      file:
+        path: /tmp/helm
+        state: directory
+
+    - name: Download and install Helm
+      shell: |
+        curl -fsSL https://get.helm.sh/helm-v{{ helm_version }}-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+        tar -xzf /tmp/helm.tar.gz -C /tmp/helm
+        mv /tmp/helm/linux-amd64/helm /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+      args:
+        creates: /usr/local/bin/helm
+
+    - name: Create k3d scripts directory
+      file:
+        path: /usr/local/bin
+        state: directory
+
+    - name: Install k3d
+      shell: |
+        curl -sL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG={{ k3d_version }} bash
+      args:
+        creates: /usr/local/bin/k3d
+
+    - name: Verify kubectl installation
+      command: kubectl version --client
+      register: kubectl_version
+      changed_when: false
+
+    - name: Display kubectl version
+      debug:
+        var: kubectl_version.stdout
+
+    - name: Verify Helm installation
+      command: helm version
+      register: helm_version
+      changed_when: false
+
+    - name: Display Helm version
+      debug:
+        var: helm_version.stdout
+
+    - name: Verify k3d installation
+      command: k3d version
+      register: k3d_version
+      changed_when: false
+
+    - name: Display k3d version
+      debug:
+        var: k3d_version.stdout
+
+- name: Setup Kubernetes Server Node
+  hosts: k8s:server
+  become: yes
+  vars:
+    cluster_name: "estudocluster"
+
+  tasks:
+    - name: Create K3d cluster (server node)
+      shell: k3d cluster create {{ cluster_name }} --servers 1 --agents 2 --port "8080:80@loadbalancer" --api-port 6443
+      args:
+        creates: /var/lib/rancher/k3s
+      register: k3d_cluster
+
+    - name: Get cluster nodes
+      command: kubectl get nodes
+      register: nodes
+      changed_when: false
+
+    - name: Display cluster nodes
+      debug:
+        var: nodes.stdout
+
+- name: Install Monitoring Stack
+  hosts: k8s:server
+  become: no
+  vars:
+    monitoring_namespace: monitoring
+
+  tasks:
+    - name: Add Prometheus Helm repository
+      kubernetes.core.helm_repository:
+        name: prometheus-community
+        url: https://prometheus-community.github.io/helm-charts
+
+    - name: Update Helm repositories
+      command: helm repo update
+
+    - name: Install kube-prometheus-stack
+      kubernetes.core.helm:
+        name: monitoring
+        chart_ref: prometheus-community/kube-prometheus-stack
+        release_namespace: "{{ monitoring_namespace }}"
+        create_namespace: true
+        values_files:
+          - ../monitoring/values-prometheus.yaml
+        state: present
