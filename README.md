@@ -264,6 +264,13 @@ kubectl get svc -n apps
 kubectl logs -n apps -l app=visit-counter
 
 # Acessar Prometheus
+# Acessar app
+kubectl port-forward -n apps svc/visit-counter 5000:80
+
+# Acessar Grafana
+kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+
+# Acessar Prometheus
 kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
 
 # Escalar para 5 réplicas

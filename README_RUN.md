@@ -55,7 +55,7 @@ kubectl run visit-counter --image=visit-counter:latest --image-pull-policy=Never
 kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=ClusterIP --name=visit-counter-svc
 
 # PASSO 9: Port-forward (em outro terminal)
-kubectl port-forward -n apps svc/visit-counter-svc 5000:80
+kubectl port-forward -n apps svc/visit-counter 5000:80
 ```
 
 ### O que cada comando faz?
@@ -188,7 +188,7 @@ kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=Clu
 
 ```powershell
 # Em um terminal PowerShell (em background ou outro terminal):
-kubectl port-forward -n apps svc/visit-counter-svc 5000:80
+kubectl port-forward -n apps svc/visit-counter 5000:80
 
 # Testar no navegador: http://localhost:5000
 
@@ -298,7 +298,43 @@ kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 909
 ```
 
 ---
-Start-Job -ScriptBlock { kubectl port-forward -n apps svc/visit-counter-svc 5000:80 } | Out-Null; Start-Sleep -Seconds 3; Invoke-WebRequest -Uri 'http://localhost:5000' -UseBasicParsing
+Start-Job -ScriptBlock { kubectl port-forward -n apps svc/visit-counter 5000:80 } | Out-Null; Start-Sleep -Seconds 3; Invoke-WebRequest -Uri 'http://localhost:5000' -UseBasicParsing
+## 🧹 Como Liberar Espaço no Docker
+
+Com o tempo, o Docker ocupa muito espaço. Para limpar:
+
+```powershell
+# Ver quanto espaço está sendo usado
+docker system df
+
+# Limpar imagens não usadas
+docker image prune -a
+
+# Limpar cache de build
+docker builder prune
+
+# Limpar volumes não usados
+docker volume prune
+
+# Limpar tudo de uma vez (⚠️ CUIDADO!)
+docker system prune -a
+
+# Para o K3d especificamente:
+k3d cluster delete estudocluster
+docker system prune
+```
+
+### Quanto Espaço Occupa?
+
+| Tipo | Tamanho |
+|------|---------|
+| Imagem visit-counter | ~211 MB |
+| Total Docker | ~692 MB (imagens) |
+| Volumes (K3d) | ~3.9 GB |
+| Build Cache | ~211 MB |
+
+---
+
 ## 🎯 Resultado Final
 
 - **Cluster K3d**: 3 nós (1 server + 2 agents) ✅
