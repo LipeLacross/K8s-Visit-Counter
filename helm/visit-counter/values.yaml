@@ -1,7 +1,7 @@
 replicaCount: 3
 
 image:
-  repository: rancher.io/library/visit-counter
+  repository: visit-counter
   tag: latest
   pullPolicy: Never
 

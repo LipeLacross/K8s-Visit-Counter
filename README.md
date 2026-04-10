@@ -5,6 +5,15 @@
 
 ---
 
+## 📚 Documentação Adicional
+
+- **[README_RUN.md](README_RUN.md)** - Como executar o projeto local (passo a passo)
+- **[README_ANSIBLE.md](README_ANSIBLE.md)** - Documentação do Ansible
+- **[README_TERRAFORM.md](README_TERRAFORM.md)** - Documentação do Terraform
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Arquitetura do projeto
+
+---
+
 ## O que este projeto faz?
 
 Uma API de contador de visitas em Flask que roda em 3 pods simultâneos no Kubernetes, com monitoramento via Prometheus e dashboards no Grafana.
@@ -298,6 +307,47 @@ ansible-playbook -i inventory.ini playbook.yml
 ansible-playbook -i inventory.ini playbook.yml --tags "docker,kubectl"
 ```
 
+## ☁️ LOCAL vs NUVEM - Quando usar cada um
+
+Este projeto tem **duas formas** de rodar:
+
+### Modo 1: LOCAL (K3d) - O que estamos usando ✅
+
+| Componente | Para que serve |
+|-----------|---------------|
+| **K3d** | Cluster Kubernetes local (dentro de Docker) |
+| **kubectl** | Gerenciar o cluster |
+| **Helm** | Deploy da aplicação |
+
+**Custo:** Grátis (só precisa do Docker Desktop)
+
+**Ideal para:** Estudo, desenvolvimento, testes
+
+### Modo 2: NUVEM (AWS) - Configurado mas não usado
+
+| Componente | Para que serve |
+|-----------|---------------|
+| **Terraform** | Criar VPC + VMs na AWS |
+| **Ansible** | Instalar Docker + kubectl nas VMs |
+| **K3d** | Criar cluster nas VMs |
+| **Helm** | Deploy da aplicação |
+
+**Custo:** Cobrado por hora (~$0.05-0.10 por EC2)
+
+**Ideal para:** Produção, aprender cloud
+
+### Qual devo usar?
+
+| Situação | Recomendado |
+|---------|-------------|
+| Aprendiz | K3d local (grátis) |
+| Desenvolvimento | K3d local |
+| Testes rápidos | K3d local |
+| Produção real | AWS (EKS/GKE) |
+| Estudo de Terraform/Ansible | AWS com Terraform |
+
+---
+
 ## 🌐 Stack Completa - Onde cada ferramenta se encaixa
 
 Este projeto demonstra a stack completa de DevOps:
@@ -374,6 +424,212 @@ Para deploy em produção:
 
 ---
 
-**Última atualização**: 2026-04-05  
+## 💻 Código da Aplicação (src/app.py)
+
+Este é o código Flask que roda dentro dos containers.
+
+```python
+from flask import Flask, Response
+from prometheus_client import Counter, generate_latest, REGISTRY
+import os
+import socket
+
+app = Flask(__name__)
+
+# Métrica: Contador de visitas (tipo Counter do Prometheus)
+visitas = Counter("visitas_total", "Total de visitas na aplicação")
+
+@app.route("/")
+def hello():
+    visitas.inc()  # Incrementa o contador
+    hostname = socket.gethostname()  # Nome do pod
+    env = os.getenv("ENV", "dev")  # Variável de ambiente
+    return f"Okay do Pod {hostname} | Ambiente: {env} | Visita número: {int(visitas._value.get())}"
+
+@app.route("/metrics")
+def metrics():
+    # Retorna métricas no formato do Prometheus
+    return Response(generate_latest(REGISTRY), mimetype="text/plain")
+
+@app.route("/health")
+def health():
+    #-health check para Kubernetes
+    return "OK", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+```
+
+### Rotas da Aplicação
+
+| Rota | Descrição | Para que serve |
+|------|-----------|---------------|
+| `/` | Página inicial | Incrementa contador e mostra mensagem |
+| `/metrics` | Métricas Prometheus | Coletado pelo Prometheus |
+| `/health` | Health check | Verifica se app está viva |
+
+### Variáveis de Ambiente
+
+| Variável | Padrão | Descrição |
+|---------|-------|----------|
+| `ENV` | `dev` | Ambiente (dev, prod, etc) |
+
+### Por que /health?
+
+O endpoint `/health` é usado pelas **Health Probes** do Kubernetes:
+
+- **Liveness Probe:** "O container está vivo?" Se `/health` retornar erro, o K8s reinicia o container
+- **Readiness Probe:** "O container está pronto para receber requisições?" Se falhar, o container é removido do Service
+
+### Como o Contador Funciona
+
+```python
+visitas = Counter("visitas_total", "Total de visitas na aplicação")
+```
+
+Cada vez que alguém acessa `/`:
+1. `visitas.inc()` incrementa o contador
+2. O Prometheus coleta via `/metrics`
+
+**Nota:** Como temos 3 réplicas, cada pod tem seu próprio contador. O Prometheus soma todos.
+
+---
+
+## 🐳 Dockerfile Explicado
+
+```dockerfile
+FROM python:3.11-slim          # Imagem base (Python 3.11 leve)
+WORKDIR /app                  # Diretório de trabalho
+COPY ../docker/requirements.txt .  # Copiar dependências
+RUN pip install --no-cache-dir -r requirements.txt  # Instalar
+COPY ../src/ .                # Copiar código da app
+EXPOSE 5000                  # Porta exposta
+CMD ["python", "app.py"]       # Comando para rodar
+```
+
+###Por que `python:3.11-slim`?
+
+- **slim** = imagem menor (baixo download)
+- **python:3.11** = versão específica do Python
+
+### COPY vs ADD
+
+- `COPY` = copia arquivos simples
+- `ADD` = copia ou baixa de URL/tar
+
+---
+
+## 🔄 Image Pull Policy
+
+No Kubernetes, vocêdefine como a imagem é baixada:
+
+```yaml
+imagePullPolicy: Always    # Sempre baixa (produção)
+imagePullPolicy: IfNotPresent  # Baixa se não existir
+imagePullPolicy: Never       # Só usa imagem local (desenvolvimento)
+```
+
+**No nosso projeto (K3d local):**
+```bash
+kubectl run visit-counter --image=visit-counter:latest --image-pull-policy=Never
+```
+
+O `--image-pull-policy=Never` evita que o K8s tente baixar do Docker Hub.
+
+---
+
+## 🆚 K3d vs Kubernetes Real
+
+| K3d | K8s Real (EKS/GKE/AKS) |
+|------|----------------------|
+| Roda em containers | Roda em VMs |
+| LoadBalancer não funciona | LoadBalancer funciona |
+| Sem cloud integration | Com cloud |
+| Para estudo | Para produção |
+
+---
+
+## 📊 Fluxo de Dados Completo
+
+```
+Usuário
+   │
+   ▼
+http://localhost:5000
+   │
+   ▼
+┌────────────────┐
+│   kubectl      │  ← Port-forward
+│   port-forward │
+└────────────────┘
+   │
+   ▼
+┌────────────────┐
+│   Service      │  ← ClusterIP (falta)
+│   (visit-svc)  │
+└────────────────┘
+   │
+   ▼
+┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+│     Pod 1      │    │     Pod 2      │    │     Pod 3      │
+│   app.py:5000  │    │   app.py:5000  │    │   app.py:5000  │
+└────────────────┘    └────────────────┘    └────────────────┘
+   │
+   ▼                    ▼                    ▼
+┌────────────────┐
+│  Prometheus    │  ← Scrapes /metrics
+│  (ServiceMon)  │
+└────────────────┘
+   │
+   ▼
+┌────────────────┐
+│    Grafana     │  ← Dashboards
+└────────────────┘
+```
+
+---
+
+## ❓ Perguntas Frequentes (FAQ)
+
+### Por que 3 réplicas?
+
+Más é configurável no Helm:
+```bash
+helm install visit-counter ./helm/visit-counter --set replicaCount=3
+```
+
+### Como mudar a imagem?
+
+```bash
+helm upgrade visit-counter ./helm/visit-counter --set image.repository=nova-imagem --set image.tag=v2
+```
+
+### Preciso de cloud?
+
+Não! K3d funciona 100% local.
+
+### Quanto custa?
+
+- K3d: Grátis (Docker Desktop)
+- AWS: Cobrado por hora
+
+### Posso usar Minikube?
+
+Sim! Mas K3d é mais leve e rápido.
+
+---
+
+## 🔗 Links Úteis
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [K3d](https://k3d.io/)
+- [Kubernetes: Learn](https://kubernetes.io/pt-br/docs/tutorials/kubernetes-basics/)
+- [Helm: Docs](https://helm.sh/pt-br/docs/)
+- [Prometheus: Getting Started](https://prometheus.io/docs/prometheus/latest/getting_started/)
+- [Grafana: Tutorials](https://grafana.com/tutorials/)
+
+---
+
+**Última atualização**: 2026-04-10  
 **Versão do projeto**: 0.1.0  
 **Mantenedor**: Felipe Moreira Rios  
