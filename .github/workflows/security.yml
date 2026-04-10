@@ -1,0 +1,42 @@
+# DevSecOps Pipeline
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Gitleaks - secrets detection
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source=${{ github.workspace }} --severity-level=HIGH
+
+      # 2. Bandit - Python SAST
+      - name: Run Bandit
+        run: |
+          pip install bandit
+          bandit -r . -f json -o bandit-report.json || true
+
+      # 3. Trivy - Dependencies + Docker
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'json'
+          output: 'trivy-report.json'
+
+      # 4. Checkov - IaC (K8s/Docker)
+      - name: Run Checkov
+        run: |
+          pip install checkov
+          checkov -d helm/ --output-format json -o checkov-report.json || true
+          checkov -f docker/Dockerfile --output-format json -o checkov-docker-report.json || true

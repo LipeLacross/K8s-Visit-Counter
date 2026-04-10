@@ -13,12 +13,34 @@ spec:
       labels:
         app: visit-counter
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: default
+      automountServiceAccountToken: false
       containers:
       - name: app
-        image: visit-counter:latest
-        imagePullPolicy: Never
+        image: visit-counter:v1.0.0
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10000
+          capabilities:
+            drop:
+            - ALL
         livenessProbe:
           httpGet:
             path: /health
@@ -27,3 +49,9 @@ spec:
           httpGet:
             path: /health
             port: 5000
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}

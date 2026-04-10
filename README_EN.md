@@ -9,10 +9,15 @@
 
 <div align="center">
   <img src="public/site.png" alt="Working Site" width="80%" style="margin: 16px 0; border-radius: 10px;">
+  <img src="public/grafana-login.png" alt="Grafana Login" width="80%" style="margin: 16px 0; border-radius: 10px;">
   <img src="public/grafana-dashboard.png" alt="Grafana Dashboards" width="80%" style="margin: 16px 0; border-radius: 10px;">
   <img src="public/prometheus-query-visitastotal.png" alt="Prometheus Metrics" width="80%" style="margin: 16px 0; border-radius: 10px;">
   <img src="public/test-running-terminal.png" alt="Terminal" width="80%" style="margin: 16px 0; border-radius: 10px;">
 </div>
+
+### 🔐 Grafana Credentials
+- **User:** admin
+- **Password:** admin123
 
 ---
 
