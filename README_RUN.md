@@ -52,7 +52,7 @@ k3d image import visit-counter:latest -c estudocluster
 kubectl run visit-counter --image=visit-counter:latest --image-pull-policy=Never -n apps --port=5000
 
 # PASSO 8: Expor service
-kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=ClusterIP --name=visit-counter-svc
+kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=ClusterIP --name=visit-counter
 
 # PASSO 9: Port-forward (em outro terminal)
 kubectl port-forward -n apps svc/visit-counter 5000:80
@@ -114,7 +114,7 @@ visit-counter   1/1     Running   1 (91m ago)   9h
 $ kubectl get svc -n apps
 NAME                TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
 visit-counter       ClusterIP   10.43.60.84    <none>        80/TCP    10h
-visit-counter-svc   ClusterIP   10.43.230.50    <none>        80/TCP    9h
+visit-counter   ClusterIP   10.43.230.50    <none>        80/TCP    9h
 ```
 
 **O que mostra:** 2 services expostos (ClusterIP porta 80)
@@ -140,7 +140,7 @@ pod/visit-counter   1/1     Running   1 (91m ago)   9h
 
 NAME                        TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
 service/visit-counter       ClusterIP   10.43.60.84    <none>        80/TCP    10h
-service/visit-counter-svc   ClusterIP   10.43.230.50    <none>        80/TCP    9h
+service/visit-counter   ClusterIP   10.43.230.50    <none>        80/TCP    9h
 ```
 
 **O que mostra:** Tudo junto (pods + services)
@@ -181,7 +181,7 @@ k3d image import visit-counter:latest -c estudocluster
 kubectl run visit-counter --image=visit-counter:latest --image-pull-policy=Never -n apps --port=5000
 
 # 8. Expor como service
-kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=ClusterIP --name=visit-counter-svc
+kubectl expose pod visit-counter -n apps --port=80 --target-port=5000 --type=ClusterIP --name=visit-counter
 ```
 
 ### 🚀 Testando a Aplicação
@@ -332,6 +332,20 @@ docker system prune
 | Total Docker | ~692 MB (imagens) |
 | Volumes (K3d) | ~3.9 GB |
 | Build Cache | ~211 MB |
+
+---
+
+## 📊 Grafana Dashboards Disponíveis
+
+Ao acessar o Grafana (localhost:3000), você terá vários dashboards prontos:
+
+- **Kubernetes / Compute Resources / Cluster** - CPU e memória do cluster
+- **Kubernetes / Compute Resources / Namespace (Pods)** - Pods por namespace
+- **Kubernetes / Networking / Cluster** - Rede do cluster
+- **Prometheus / Overview** - Métricas do Prometheus
+- **Node Exporter / Nodes** - Métricas dos nós
+- **CoreDNS** - Métricas do DNS
+- **etcd** - Métricas do etcd
 
 ---
 
