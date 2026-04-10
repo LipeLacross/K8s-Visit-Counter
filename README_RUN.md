@@ -71,6 +71,82 @@ kubectl port-forward -n apps svc/visit-counter-svc 5000:80
 
 ---
 
+## 📸 Screenshots dos Comandos
+
+Estes são os resultados esperados ao rodar os comandos:
+
+### 🌐 Site Funcionando
+![Site](public/site.png)
+
+---
+
+### 📋 Lista de Comandos
+![List](public/list-things.png)
+
+---
+
+### 1️⃣ kubectl get nodes
+```bash
+$ kubectl get nodes
+NAME                         STATUS   ROLES                  AGE   VERSION
+k3d-estudocluster-agent-0    Ready    <none>                 10h   v1.31.5+k3s1
+k3d-estudocluster-agent-1    Ready    <none>                 10h   v1.31.5+k3s1
+k3d-estudocluster-server-0   Ready    control-plane,master   10h   v1.31.5+k3s1
+```
+
+**O que mostra:** 3 nodes (1 server + 2 agents) - todos Ready ✅
+
+---
+
+### 2️⃣ kubectl get pods -n apps
+```bash
+$ kubectl get pods -n apps
+NAME            READY   STATUS    RESTARTS      AGE
+visit-counter   1/1     Running   1 (91m ago)   9h
+```
+
+**O que mostra:** 1 pod rodando (visit-counter)
+
+---
+
+### 3️⃣ kubectl get svc -n apps
+```bash
+$ kubectl get svc -n apps
+NAME                TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+visit-counter       ClusterIP   10.43.60.84    <none>        80/TCP    10h
+visit-counter-svc   ClusterIP   10.43.230.50    <none>        80/TCP    9h
+```
+
+**O que mostra:** 2 services expostos (ClusterIP porta 80)
+
+---
+
+### 4️⃣ helm list -n apps
+```bash
+$ helm list -n apps
+NAME         	NAMESPACE	REVISION	UPDATED                              	STATUS  	CHART              	APP VERSION
+visit-counter	apps     	3       	2026-04-09 23:37:08 -0300  	deployed	visit-counter-0.1.0	1.0
+```
+
+**O que mostra:** Helm release instalado (status deployed)
+
+---
+
+### 5️⃣ kubectl get all -n apps
+```bash
+$ kubectl get all -n apps
+NAME                READY   STATUS    RESTARTS      AGE
+pod/visit-counter   1/1     Running   1 (91m ago)   9h
+
+NAME                        TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+service/visit-counter       ClusterIP   10.43.60.84    <none>        80/TCP    10h
+service/visit-counter-svc   ClusterIP   10.43.230.50    <none>        80/TCP    9h
+```
+
+**O que mostra:** Tudo junto (pods + services)
+
+---
+
 ## 🎉 O que Funcionou!
 
 Após vários testes, o projeto está rodando! A solução final foi:
