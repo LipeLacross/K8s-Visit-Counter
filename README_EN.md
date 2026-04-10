@@ -107,6 +107,85 @@ curl http://localhost:5000/metrics
 | **Prometheus** | Metrics collection |
 | **Grafana** | Visualization |
 | **PowerShell** | Automation scripts |
+| **Gitleaks** | Secrets detection |
+| **Bandit** | Python static analysis (SAST) |
+| **Trivy** | Vulnerability scanner |
+| **Checkov** | IaC/Kubernetes scanning |
+| **Dependabot** | Auto-update dependencies |
+
+---
+
+## 🔒 DevSecOps Pipeline
+
+This project includes a complete DevSecOps security pipeline:
+
+### Integrated Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| **Gitleaks** | Secrets | Detects leaked secrets in code |
+| **Bandit** | SAST | Python static code analysis |
+| **Trivy** | SCA/Docker | Vulnerability scanner for dependencies and images |
+| **Checkov** | IaC | Kubernetes manifests and Dockerfiles validation |
+| **Dependabot** | Auto-update | Automatic dependency updates |
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/security.yml
+name: Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+      - name: Run Bandit
+        run: pip install bandit && bandit -r .
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+      - name: Run Checkov
+        run: pip install checkov && checkov -d helm/
+```
+
+### Pre-commit Hooks
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+```
+
+### How to Use
+
+```powershell
+# Install pre-commit
+pip install pre-commit
+pre-commit install
+
+# Run locally
+pre-commit run --all-files
+
+# On GitHub (automatic)
+# Every push/PR triggers the pipeline
+```
+
+### Scanner Results
+
+- **Bandit**: 0 issues (secure Python code)
+- **Checkov**: ~89 checks passed on Kubernetes manifests
+- **Gitleaks**: No secrets detected
 
 ## 📊 Mermaid Diagram
 

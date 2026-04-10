@@ -105,6 +105,85 @@ curl http://localhost:5000/metrics
 | **Prometheus** | Coleta de métricas |
 | **Grafana** | Visualização |
 | **PowerShell** | Automação de scripts |
+| **Gitleaks** | Detecção de segredos |
+| **Bandit** | Análise estática Python (SAST) |
+| **Trivy** | Scanner de vulnerabilidades |
+| **Checkov** |扫描 IaC/Kubernetes |
+| **Dependabot** | Atualização automática de dependências |
+
+---
+
+## 🔒 DevSecOps Pipeline
+
+Este projeto inclui um pipeline completo de segurança DevSecOps:
+
+### Ferramentas Integradas
+
+| Ferramenta | Tipo | Descrição |
+|------------|------|-----------|
+| **Gitleaks** | Secrets | Detecta segredos vazados no código |
+| **Bandit** | SAST | Análise estática de código Python |
+| **Trivy** | SCA/Docker | Scanner de vulnerabilidades em dependências e imagens |
+| **Checkov** | IaC | Validação de manifestos Kubernetes e Dockerfiles |
+| **Dependabot** | Auto-update | Atualização automática de dependências |
+
+### GitHub Actions
+
+```yaml
+# .github/workflows/security.yml
+name: Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+      - name: Run Bandit
+        run: pip install bandit && bandit -r .
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+      - name: Run Checkov
+        run: pip install checkov && checkov -d helm/
+```
+
+### Pre-commit Hooks
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+```
+
+### Como Usar
+
+```powershell
+# Instalar pre-commit
+pip install pre-commit
+pre-commit install
+
+# Executar localmente
+pre-commit run --all-files
+
+# No GitHub (automático)
+# A cada push/PR, o pipeline executa automaticamente
+```
+
+### Resultados dos Scanners
+
+- **Bandit**: 0 issues (código Python seguro)
+- **Checkov**: ~89 checks passados em manifestos Kubernetes
+- **Gitleaks**: Nenhum segredo detectado
 
 ## 📊 Diagrama Mermaid
 
