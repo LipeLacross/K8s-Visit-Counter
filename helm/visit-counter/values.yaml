@@ -1,9 +1,9 @@
 replicaCount: 3
 
 image:
-  repository: visit-counter
+  repository: rancher.io/library/visit-counter
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
 
 service:
   type: ClusterIP

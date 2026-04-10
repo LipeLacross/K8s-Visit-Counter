@@ -1,0 +1,12 @@
+.git
+.gitignore
+README.md
+README_EN.md
+ARCHITECTURE.md
+terraform/
+ansible/
+scripts/
+helm/
+monitoring/
+docker/.dockerignore
+XK8s_Visit_Counter_Guide_2026.md
